@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Contact Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <h1>Contact Manager</h1>
+
+    <section class="panel add-panel" aria-labelledby="add-heading">
+      <h2 id="add-heading">Add Contact</h2>
+      <form id="contact-form" class="form-row" autocomplete="off">
+        <div class="form-field">
+          <label for="contact-name" class="sr-only">Name</label>
+          <input id="contact-name" type="text" placeholder="Name" required maxlength="20" />
+        </div>
+
+        <div class="form-field">
+          <label for="contact-number" class="sr-only">Phone</label>
+          <input id="contact-number" type="tel" inputmode="tel" placeholder="Phone number" required maxlength="11" />
+        </div>
+
+        <div class="form-field shrink">
+          <button type="submit" class="btn primary">Add</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel list-panel" aria-labelledby="list-heading">
+      <h2 id="list-heading">Contacts</h2>
+      <div id="contact-list" class="contacts" aria-live="polite"></div>
+    </section>
+  </main>
+
+  
+  <div id="modal" class="modal" role="dialog" aria-modal="true" hidden>
+    <div class="modal-backdrop" data-dismiss="backdrop"></div>
+    <div class="modal-panel" role="document" aria-labelledby="modal-title">
+      <h3 id="modal-title">Edit Contact</h3>
+      <form id="modal-form" class="modal-form">
+        <label class="modal-row">
+          <span class="label">Name</span>
+          <input id="modal-name" required maxlength="20" />
+        </label>
+        <label class="modal-row">
+          <span class="label">Number</span>
+          <input id="modal-number" required maxlength="11" />
+        </label>
+        <div class="modal-actions">
+          <button id="modal-save" type="submit" class="btn primary">Save</button>
+          <button id="modal-cancel" type="button" class="btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="contacts.js"></script>
+</body>
+</html>
