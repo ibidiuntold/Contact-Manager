@@ -38,7 +38,7 @@ const contactSchema = new mongoose.Schema({
 
 const Contact = mongoose.model('Contact', contactSchema);
 
-// --- API routes ---
+//API routes
 
 // GET /contacts  -> returns array of contacts
 app.get('/contacts', async (req, res) => {
