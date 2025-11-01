@@ -1,5 +1,4 @@
-const API = "http://localhost:3000"; // change if your server is on a different host/port
-
+const API = "http://localhost:3000"; 
 // DOM elements
 const contactForm = document.getElementById("contact-form");
 const nameInput = document.getElementById("contact-name");
