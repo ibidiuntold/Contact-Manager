@@ -89,6 +89,7 @@ input:focus{box-shadow:0 6px 18px rgba(37,99,235,0.08); border-color:var(--accen
   cursor:pointer;
   font-weight:600;
 }
+
 .btn.primary{
   background:var(--accent);
   color:white;

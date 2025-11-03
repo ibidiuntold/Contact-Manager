@@ -1,111 +1,168 @@
-const dotenv = require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const multer = require('multer');
+const { parse } = require('csv-parse');
+const nodemailer = require('nodemailer');
 
 const app = express();
-app.use(cors());           // allow browser to call server
-app.use(express.json());   // parse JSON bodies
+app.use(cors());
+app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-
-// Build connection string (either full MONGO_URI or components)
-let mongoUri = process.env.MONGO_URI;
-if (!mongoUri) {
-  const { MONGO_USER, MONGO_PASS, MONGO_HOST, MONGO_DB } = process.env;
-  if (!MONGO_USER || !MONGO_PASS || !MONGO_HOST || !MONGO_DB) {
-    console.error("Missing one of required env vars: MONGO_URI or (MONGO_USER, MONGO_PASS, MONGO_HOST, MONGO_DB)");
-    process.exit(1);
-  }
-  // encode password safely
-  const encPass = encodeURIComponent(MONGO_PASS);
-  mongoUri = `mongodb+srv://${MONGO_USER}:${encPass}@${MONGO_HOST}/${MONGO_DB}?retryWrites=true&w=majority`;
+const MONGO_URI = process.env.MONGO_URI;
+if (!MONGO_URI) {
+  console.error('Please set MONGO_URI in .env');
+  process.exit(1);
 }
 
-mongoose.connect(process.env.MONGO_URI) // connect to MongoDB Atlas
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(err => { console.error('Mongo connect error:', err); process.exit(1); });
 
-.then(() => console.log('✅ Connected to MongoDB Atlas'))
-.catch(err => {
-  console.error('❌ MongoDB connection error:', err.message || err);
-  process.exit(1);
-});
-
-// Schema & Model
+// Contact schema/model
 const contactSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
-  number: { type: String, required: true, trim: true }
+  number: { type: String, required: true, trim: true },
 }, { timestamps: true });
 
 const Contact = mongoose.model('Contact', contactSchema);
 
-// --- API routes ---
-
-// GET /contacts  -> returns array of contacts
+// -------- CRUD ----------
 app.get('/contacts', async (req, res) => {
   try {
     const contacts = await Contact.find().sort({ createdAt: -1 });
     res.json(contacts);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Failed to fetch contacts' });
   }
 });
 
-// POST /contacts  -> create contact { name, number }
 app.post('/contacts', async (req, res) => {
   try {
     const { name, number } = req.body;
-    if (!name || !number) return res.status(400).json({ error: 'name and number required' });
-    const c = new Contact({ name, number });
-    await c.save();
+    if (!name || !number) return res.status(400).json({ error: 'name & number required' });
+    const c = await Contact.create({ name, number });
     res.status(201).json(c);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to create contact' });
+    res.status(500).json({ error: 'Create failed' });
   }
 });
 
-// PUT /contacts/:id -> update contact
 app.put('/contacts/:id', async (req, res) => {
   try {
-    const id = req.params.id;
-    const { name, number } = req.body;
-    if (!name || !number) return res.status(400).json({ error: 'name and number required' });
-    const updated = await Contact.findByIdAndUpdate(id, { name, number }, { new: true, runValidators: true });
-    if (!updated) return res.status(404).json({ error: 'Contact not found' });
+    const updated = await Contact.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!updated) return res.status(404).json({ error: 'Not found' });
     res.json(updated);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to update contact' });
+    res.status(500).json({ error: 'Update failed' });
   }
 });
 
-// DELETE /contacts/:id -> delete contact
 app.delete('/contacts/:id', async (req, res) => {
   try {
-    const id = req.params.id;
-    const removed = await Contact.findByIdAndDelete(id);
-    if (!removed) return res.status(404).json({ error: 'Contact not found' });
+    const removed = await Contact.findByIdAndDelete(req.params.id);
+    if (!removed) return res.status(404).json({ error: 'Not found' });
     res.status(204).end();
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to delete contact' });
+    res.status(500).json({ error: 'Delete failed' });
   }
 });
 
-// Optional: serve static front-end if you want the server to also host the UI
-// Uncomment these lines if you want to serve index.html & other static files from the same server
-// const path = require('path');
-// app.use(express.static(path.join(__dirname, './'))); // serve project root
-// app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+// -------- CSV/VCF import/export ----------
+const upload = multer({ storage: multer.memoryStorage() });
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// Import contacts via CSV (expects headers: name,number)
+app.post('/contacts/import', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const rows = [];
+    parse(req.file.buffer, { columns: true, trim: true }, (err, records) => {
+      if (err) return res.status(400).json({ error: 'CSV parse error' });
+      // records is array of objects with keys from headers
+      const toInsert = records.map(r => ({ name: r.name || r.Name || r.NAME, number: r.number || r.Number || r.PHONE || r.phone }));
+      // filter valid
+      const valid = toInsert.filter(c => c.name && c.number);
+      Contact.insertMany(valid)
+        .then(result => res.json({ imported: result.length }))
+        .catch(e => res.status(500).json({ error: 'DB insert failed', details: e.message }));
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Import failed', details: err.message });
+  }
 });
 
-// graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('Shutting down...');
-  await mongoose.disconnect();
-  server.close(() => process.exit(0));
+// Export CSV
+app.get('/contacts/export/csv', async (req, res) => {
+  try {
+    const contacts = await Contact.find().sort({ createdAt: -1 });
+    let csv = 'name,number,createdAt\n';
+    contacts.forEach(c => {
+      const name = `"${String(c.name).replace(/"/g, '""')}"`;
+      const num = `"${String(c.number).replace(/"/g, '""')}"`;
+      csv += `${name},${num},${c.createdAt.toISOString()}\n`;
+    });
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="contacts.csv"');
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: 'Export failed' });
+  }
 });
+
+// Export VCF (vCard)
+app.get('/contacts/export/vcf', async (req, res) => {
+  try {
+    const contacts = await Contact.find().sort({ createdAt: -1 });
+    let vcf = '';
+    contacts.forEach(c => {
+      const name = c.name || '';
+      const number = c.number || '';
+      vcf += `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL;TYPE=CELL:${number}\nEND:VCARD\n`;
+    });
+    res.setHeader('Content-Type', 'text/vcard; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="contacts.vcf"');
+    res.send(vcf);
+  } catch (err) {
+    res.status(500).json({ error: 'VCF export failed' });
+  }
+});
+
+// ---------- Email sending (optional) ----------
+let transporter = null;
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: false,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+  });
+}
+
+app.post('/send-email', async (req, res) => {
+  const { to, subject, text, contactIds } = req.body;
+  if (!to || (!text && !contactIds)) return res.status(400).json({ error: 'to and text or contactIds required' });
+  try {
+    // build message body including contact details if contactIds provided
+    let body = text || '';
+    if (Array.isArray(contactIds) && contactIds.length > 0) {
+      const contacts = await Contact.find({ _id: { $in: contactIds }});
+      body += '\n\nContacts:\n' + contacts.map(c => `${c.name} — ${c.number}`).join('\n');
+    }
+    if (!transporter) return res.status(500).json({ error: 'SMTP not configured' });
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+      to,
+      subject: subject || 'Contacts from Contact Manager',
+      text: body
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('send-mail err', err);
+    res.status(500).json({ error: 'Failed to send email', details: err.message });
+  }
+});
+
+// Start
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

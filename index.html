@@ -10,46 +10,60 @@
   <main class="app">
     <header class="app-header">
       <h1>Contact Manager</h1>
+      <p class="lead">Add, import, export, search and share contacts</p>
+    </header>
 
-    <section class="panel add-panel" aria-labelledby="add-heading">
-      <h2 id="add-heading">Add Contact</h2>
+    <section class="panel add-panel">
+      <h2>Add Contact</h2>
       <form id="contact-form" class="form-row" autocomplete="off">
         <div class="form-field">
-          <label for="contact-name" class="sr-only">Name</label>
-          <input id="contact-name" type="text" placeholder="Name" required maxlength="20" />
+          <input id="contact-name" type="text" placeholder="Name" required maxlength="40" />
         </div>
-
         <div class="form-field">
-          <label for="contact-number" class="sr-only">Phone</label>
-          <input id="contact-number" type="tel" inputmode="tel" placeholder="Phone number" required maxlength="11" />
+          <input id="contact-number" type="tel" placeholder="Phone number" required maxlength="11" />
         </div>
-
         <div class="form-field shrink">
           <button type="submit" class="btn primary">Add</button>
+        </div>
+        <div class="form-field shrink">
+          <input id="csv-file" type="file" accept=".csv" />
+        </div>
+        <div class="form-field shrink">
+          <button id="import-btn" class="btn">Import CSV</button>
+        </div>
+        <div class="form-field shrink">
+          <button id="export-csv" class="btn">Export CSV</button>
+        </div>
+        <div class="form-field shrink">
+          <button id="export-vcf" class="btn">Export VCF</button>
         </div>
       </form>
     </section>
 
-    <section class="panel list-panel" aria-labelledby="list-heading">
-      <h2 id="list-heading">Contacts</h2>
+    <section class="panel list-panel">
+      <div class="list-header" style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+        <h2 style="margin:0">Contacts</h2>
+        <input id="search" placeholder="Search name or number..." style="flex:1;min-width:160px;padding:8px;border-radius:8px;border:1px solid #e6e9ef" />
+        <select id="filter" style="padding:8px;border-radius:8px;border:1px solid #e6e9ef">
+          <option value="">All</option>
+          <option value="recent">Added (last 7 days)</option>
+          <option value="old">Added (older)</option>
+        </select>
+        <button id="send-selected" class="btn">Email Selected</button>
+      </div>
+
       <div id="contact-list" class="contacts" aria-live="polite"></div>
     </section>
   </main>
 
-  
+  <!-- Modal Edit -->
   <div id="modal" class="modal" role="dialog" aria-modal="true" hidden>
     <div class="modal-backdrop" data-dismiss="backdrop"></div>
     <div class="modal-panel" role="document" aria-labelledby="modal-title">
       <h3 id="modal-title">Edit Contact</h3>
       <form id="modal-form" class="modal-form">
-        <label class="modal-row">
-          <span class="label">Name</span>
-          <input id="modal-name" required maxlength="20" />
-        </label>
-        <label class="modal-row">
-          <span class="label">Number</span>
-          <input id="modal-number" required maxlength="11" />
-        </label>
+        <label class="modal-row"><span class="label">Name</span><input id="modal-name" required maxlength="40" /></label>
+        <label class="modal-row"><span class="label">Number</span><input id="modal-number" required maxlength="11" /></label>
         <div class="modal-actions">
           <button id="modal-save" type="submit" class="btn primary">Save</button>
           <button id="modal-cancel" type="button" class="btn">Cancel</button>
@@ -57,6 +71,9 @@
       </form>
     </div>
   </div>
+
+  <!-- Hidden link to trigger downloads -->
+  <a id="download-link" style="display:none"></a>
 
   <script src="contacts.js"></script>
 </body>

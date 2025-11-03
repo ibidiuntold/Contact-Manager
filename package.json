@@ -1,7 +1,7 @@
 {
   "name": "contact-manager",
   "version": "1.0.0",
-  "description": "",
+  "description": "A simple yet powerful contact management system built to help users organize their personal and professional connections efficiently.",
   "main": "contacts.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,8 +11,19 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "mongoose": "^8.19.2"
-  }
+    "mongoose": "^8.19.2",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ibidiuntold/Contact-Manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ibidiuntold/Contact-Manager/issues"
+  },
+  "homepage": "https://github.com/ibidiuntold/Contact-Manager#readme"
 }
