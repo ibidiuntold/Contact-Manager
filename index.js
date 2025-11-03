@@ -29,7 +29,13 @@ const contactSchema = new mongoose.Schema({
 
 const Contact = mongoose.model('Contact', contactSchema);
 
+<<<<<<< HEAD
 // -------- CRUD ----------
+=======
+//API routes
+
+// GET /contacts  -> returns array of contacts
+>>>>>>> f66368ec16ea037b11772706b38ccd9b06a68344
 app.get('/contacts', async (req, res) => {
   try {
     const contacts = await Contact.find().sort({ createdAt: -1 });

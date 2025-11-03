@@ -1,5 +1,13 @@
 const API = "http://localhost:3000"; 
+<<<<<<< HEAD
 
+=======
+// DOM elements
+const contactForm = document.getElementById("contact-form");
+const nameInput = document.getElementById("contact-name");
+const numberInput = document.getElementById("contact-number");
+const contactList = document.getElementById("contact-list");
+>>>>>>> f66368ec16ea037b11772706b38ccd9b06a68344
 
 const contactForm = document.getElementById('contact-form');
 const nameInput = document.getElementById('contact-name');
