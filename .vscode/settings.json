@@ -1,3 +1,9 @@
 {
-    "terminal.explorerKind": "external"
+    "terminal.explorerKind": "external",
+    "mdb.presetConnections": [
+        {
+            "name": "Preset Connection",
+            "connectionString": "mongodb://localhost:27017"
+        }
+    ]
 }
