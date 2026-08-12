@@ -1,5 +1,7 @@
+
 const API = "http://localhost:3000"; 
 
+// DOM
 const contactForm = document.getElementById('contact-form');
 const nameInput = document.getElementById('contact-name');
 const numberInput = document.getElementById('contact-number');
@@ -90,7 +92,7 @@ function renderContacts(list) {
     const left = el('div', { class: 'contact-left' }, [avatar, textBlock]);
 
     // checkbox for multi-select
-    const checkbox = el('input', { type: 'checkbox', class: 'sel-chk', 'data-id': id, style: 'width:16px; height:16px; cursor:pointer; accent-color:#007bff;'});
+    const checkbox = el('input', { type: 'checkbox', class: 'sel-chk', 'data-id': id });
     checkbox.checked = selectedIds.has(String(id));
     checkbox.addEventListener('change', (e) => {
       if (e.target.checked) selectedIds.add(String(id));
